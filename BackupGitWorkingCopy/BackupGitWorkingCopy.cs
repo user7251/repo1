@@ -3,20 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
-#if _
-- This console app backs-up changed files and added files in a Git working copy.
-- The next version of this app could allow the user to run "git status | GitWorkingCopyBackup.exe".
-- Motivation: Git does not have a way to backup changed files and added files in a working copy.  Many people use 
-    "git commit" and "git push", but that pollutes the repo with backups.  Another option is to use "git diff", but 
-    it has an issue with Visual Studio 2010 (VS).  Sometimes, VS saves C# files as UTF-8, sometimes UTF-16LE.  When 
-    VS switches a file from one to the other, the "git diff" patch file says, "Binary files a/path1/file1.cs and 
-    b/path1/file1.cs differ," and "git apply" fails to apply the patch.
-- To backup:
-    - Configure the paths in the BackupGitWorkingCopy class.
-    - In "git bash," run "git status > git-status.txt"
-    - Run this app.
-- To restore, use Windows Explorer to copy (merge) the backup folder into the local git repo folder.
-#endif
 namespace GitHubUser7251 {
     class BackupGitWorkingCopy_Main {
         static void Main(string[] args) {
