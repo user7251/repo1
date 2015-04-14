@@ -11,7 +11,6 @@ namespace GitHubUser7251 {
     }
     class BackupGitWorkingCopy {
         // configure:
-        const string GIT_STATUS_OUTPUT_FILE_PATH = @"C:\git-repo\git-status.txt";
         const string REPO_PATH_ROOT = @"C:\git-repo";
         const string BACKUP_PATH_ROOT = @"C:\backup";
         //
@@ -20,11 +19,8 @@ namespace GitHubUser7251 {
             new LinePrefix ( "	modified:   " ), new LinePrefix ( "	new file:   " ) };
         public void Run() {
             PrepFolders();
-            var f = new FileInfo ( GIT_STATUS_OUTPUT_FILE_PATH );
-            var fs = f.Open ( FileMode.Open, FileAccess.Read );
-            StreamReader sr = new StreamReader(fs);
             string line;
-            while ((line = sr.ReadLine()) != null) RunLine ( line );
+            while ( ( line = Console.In.ReadLine() ) != null ) RunLine ( line );
         }
         void PrepFolders() {
             _diRepo = new DirectoryInfo ( REPO_PATH_ROOT );
