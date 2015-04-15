@@ -1,9 +1,13 @@
-- This console app backs-up uncommitted files (changed files and added files) in a Git working copy.
-- To backup your Git working copy, run "git status | BackupGitWorkingCopy.exe".
-- To restore a Git working copy, use Windows Explorer to copy (merge) the backup folder into the local git repo folder.
-- Motivation: Git does not have a way to backup changed files and added files in a working copy.  Many people use 
-    "git commit" and "git push", but that pollutes the repo with backups.  Another option is to use "git diff", but 
-    it has an issue with Visual Studio 2010 (VS).  Sometimes, VS saves C# files as UTF-8, sometimes UTF-16LE.  When 
-    VS switches a file from one to the other, the "git diff" patch file says, "Binary files a/path1/file1.cs and 
-    b/path1/file1.cs differ," and "git apply" fails to apply the patch.
-- Build: Before you build BackupGitWorkingCopy, configure the paths in the BackupGitWorkingCopy class.
+This console app backs-up uncommitted files (changed files and added files) in a Git working copy.
+
+To backup your Git working copy, open Git bash and run:
+$ git status | BackupGitWorkingCopy.exe "c:\your-repo" "c:\your-backup-root"
+
+To restore a Git working copy, use Windows Explorer to copy/merge your backup folder contents into your local Git 
+repo folder.
+
+Motivation: Git does not have a way to backup uncommitted files (changed files and added files) in a working copy.  
+Many people use "git commit" and "git push", but that pollutes your repo with backups.  Another option is to use 
+"git diff", but it has an issue with Visual Studio 2010 (VS).  Sometimes, VS saves C# files as UTF-8, sometimes 
+UTF-16LE.  When VS switches a file from one to the other, the "git diff" patch file says, 
+"Binary files a/path1/file1.cs and b/path1/file1.cs differ," and "git apply" fails to apply the patch.

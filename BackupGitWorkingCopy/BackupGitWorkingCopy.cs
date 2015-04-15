@@ -7,25 +7,29 @@ namespace GitHubUser7251 {
     class BackupGitWorkingCopy_Main {
         static void Main(string[] args) {
             var f = new BackupGitWorkingCopy();
-            f.Run(); } 
+            f.Run ( args ); } 
     }
     class BackupGitWorkingCopy {
-        // configure:
-        const string REPO_PATH_ROOT = @"C:\git-repo";
-        const string BACKUP_PATH_ROOT = @"C:\backup";
-        //
+        string _repoPathRoot, _backupPathRoot;
         DirectoryInfo _diBackup, _diRepo;
         LinePrefix[] _linePrefixes = new LinePrefix[] { 
             new LinePrefix ( "	modified:   " ), new LinePrefix ( "	new file:   " ) };
-        public void Run() {
+        public void Run ( string[] args ) {
+            ReadArgs ( args );
             PrepFolders();
             string line;
             while ( ( line = Console.In.ReadLine() ) != null ) RunLine ( line );
         }
+        void ReadArgs ( string[] args ) {
+            if ( args.Length < 2 ) throw new ArgumentException ( 
+                "Missing args.  args.Length{"+args.Length+"}  See the user guide." );
+            _repoPathRoot = args[0];
+            _backupPathRoot = args[1];
+        }
         void PrepFolders() {
-            _diRepo = new DirectoryInfo ( REPO_PATH_ROOT );
-            if ( ! _diRepo.Exists ) throw new Exception("! _diRepo.Exists");
-            _diBackup = new DirectoryInfo ( string.Concat ( BACKUP_PATH_ROOT, @"\", DateTime.Now.ToString("yyyy-MM-dd-HHmm") ) );
+            _diRepo = new DirectoryInfo ( _repoPathRoot );
+            if ( ! _diRepo.Exists ) throw new Exception("! _diRepo.Exists {" + _repoPathRoot + "}" );
+            _diBackup = new DirectoryInfo ( string.Concat ( _backupPathRoot, @"\", DateTime.Now.ToString("yyyy-MM-dd-HHmm") ) );
             if ( ! _diBackup.Exists ) _diBackup.Create();
         }
         void RunLine ( string line ) {
@@ -35,7 +39,7 @@ namespace GitHubUser7251 {
                 if ( i > -1 ) break; }
             if ( i < 0 ) return;
             string subPath = line.Substring ( i );
-            string srcPath = string.Concat ( REPO_PATH_ROOT, @"\", subPath );
+            string srcPath = string.Concat ( _repoPathRoot, @"\", subPath );
             string targetPath = string.Concat ( _diBackup.FullName, @"\", subPath );
             Directory.CreateDirectory ( Path.GetDirectoryName ( targetPath ) );
             File.Copy ( srcPath, targetPath, overwrite: true );
