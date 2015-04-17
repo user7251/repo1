@@ -2,6 +2,14 @@ This console app backs-up uncommitted files (changed files and added files) in a
 
 To backup your Git working copy, open Git bash and run:
 $ git status | BackupGitWorkingCopy.exe "c:\your-repo" "c:\your-backup-root"
+The app creates a backup folder like this:
+c:\your-backup-root\2015-04-16-1707
+
+Optional branch name:
+You can pass an optional branch name as the third argument:
+$ git status | BackupGitWorkingCopy.exe "c:\your-repo" "c:\your-backup-root" $( git rev-parse --abbrev-ref HEAD )
+The app appends it to the backup folder name:
+c:\your-backup-root\2015-04-16-1707-development
 
 To restore a Git working copy, use Windows Explorer to copy/merge your backup folder contents into your local Git 
 repo folder.

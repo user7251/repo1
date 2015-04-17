@@ -10,7 +10,7 @@ namespace GitHubUser7251 {
             f.Run ( args ); } 
     }
     class BackupGitWorkingCopy {
-        string _repoPathRoot, _backupPathRoot;
+        string _repoPathRoot, _backupPathRoot, _branch;
         DirectoryInfo _diBackup, _diRepo;
         LinePrefix[] _linePrefixes = new LinePrefix[] { 
             new LinePrefix ( "	modified:   " ), new LinePrefix ( "	new file:   " ) };
@@ -25,11 +25,18 @@ namespace GitHubUser7251 {
                 "Missing args.  args.Length{"+args.Length+"}  See the user guide." );
             _repoPathRoot = args[0];
             _backupPathRoot = args[1];
+            Console.Out.WriteLine ( string.Concat ( "repoPathRoot: ", _repoPathRoot ) );
+            Console.Out.WriteLine ( string.Concat ( "backupPathRoot: ", _backupPathRoot ) );
+            if ( args.Length > 2 ) {
+                _branch = args[2];
+                Console.Out.WriteLine ( string.Concat ( "branch: ", _branch ) ); }
         }
         void PrepFolders() {
             _diRepo = new DirectoryInfo ( _repoPathRoot );
             if ( ! _diRepo.Exists ) throw new Exception("! _diRepo.Exists {" + _repoPathRoot + "}" );
-            _diBackup = new DirectoryInfo ( string.Concat ( _backupPathRoot, @"\", DateTime.Now.ToString("yyyy-MM-dd-HHmm") ) );
+            var backupPath = string.Concat ( _backupPathRoot, @"\", DateTime.Now.ToString("yyyy-MM-dd-HHmm") );
+            if ( ! string.IsNullOrWhiteSpace ( _branch ) ) backupPath = string.Concat ( backupPath, @"-", _branch );
+            _diBackup = new DirectoryInfo ( backupPath );
             if ( ! _diBackup.Exists ) _diBackup.Create();
         }
         void RunLine ( string line ) {
