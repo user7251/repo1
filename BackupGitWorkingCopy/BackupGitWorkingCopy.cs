@@ -10,7 +10,8 @@ namespace GitHubUser7251 {
             f.Run ( args ); } 
     }
     class BackupGitWorkingCopy {
-        string _repoPathRoot, _backupPathRoot, _branch;
+        string _repoPathRoot, _backupPathRoot, 
+            _suffix; // backup folder name suffix
         DirectoryInfo _diBackup, _diRepo;
         LinePrefix[] _linePrefixes = new LinePrefix[] { 
             new LinePrefix ( "	modified:   " ), new LinePrefix ( "	new file:   " ) };
@@ -25,20 +26,20 @@ namespace GitHubUser7251 {
                 "Missing args.  args.Length{"+args.Length+"}  See the user guide." );
             _repoPathRoot = args[0];
             _backupPathRoot = args[1];
-            Console.Out.WriteLine ( string.Concat ( "repoPathRoot: ", _repoPathRoot ) );
-            Console.Out.WriteLine ( string.Concat ( "backupPathRoot: ", _backupPathRoot ) );
-            if ( args.Length > 2 ) {
-                _branch = args[2];
-                Console.Out.WriteLine ( string.Concat ( "branch: ", _branch ) ); }
+            //Console.Out.WriteLine ( string.Concat ( "repoPathRoot: ", _repoPathRoot ) );
+            //Console.Out.WriteLine ( string.Concat ( "backupPathRoot: ", _backupPathRoot ) );
+            if ( args.Length > 2 ) _suffix = args[2];
         }
         void PrepFolders() {
             _diRepo = new DirectoryInfo ( _repoPathRoot );
             if ( ! _diRepo.Exists ) throw new Exception("! _diRepo.Exists {" + _repoPathRoot + "}" );
             var backupPath = string.Concat ( _backupPathRoot, @"\", DateTime.Now.ToString("yyyy-MM-dd-HHmm") );
-            if ( ! string.IsNullOrWhiteSpace ( _branch ) ) backupPath = string.Concat ( backupPath, @"-", _branch );
+            if ( ! string.IsNullOrWhiteSpace ( _suffix ) ) backupPath = string.Concat ( backupPath, "-", _suffix );
             _diBackup = new DirectoryInfo ( backupPath );
             if ( ! _diBackup.Exists ) _diBackup.Create();
+            Console.Out.WriteLine ( string.Concat ( "backup folder {", _diBackup.FullName, "}" ) );
         }
+        /// GetFullPath() converts '/' to '\'
         void RunLine ( string line ) {
             int i = -1;
             foreach ( var lp in _linePrefixes ) {
@@ -46,9 +47,10 @@ namespace GitHubUser7251 {
                 if ( i > -1 ) break; }
             if ( i < 0 ) return;
             string subPath = line.Substring ( i );
-            string srcPath = string.Concat ( _repoPathRoot, @"\", subPath );
-            string targetPath = string.Concat ( _diBackup.FullName, @"\", subPath );
+            string srcPath = Path.GetFullPath ( string.Concat ( _repoPathRoot, @"\", subPath ) );
+            string targetPath = Path.GetFullPath ( string.Concat ( _diBackup.FullName, @"\", subPath ) );
             Directory.CreateDirectory ( Path.GetDirectoryName ( targetPath ) );
+            Console.Out.WriteLine ( srcPath );
             File.Copy ( srcPath, targetPath, overwrite: true );
         }
     }

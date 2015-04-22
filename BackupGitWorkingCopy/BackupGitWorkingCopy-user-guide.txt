@@ -1,20 +1,24 @@
 This console app backs-up uncommitted files (changed files and added files) in a Git working copy.
 
+Backup:
 To backup your Git working copy, open Git bash and run:
 $ git status | BackupGitWorkingCopy.exe "c:\your-repo" "c:\your-backup-root"
 The app creates a backup folder like this:
 c:\your-backup-root\2015-04-16-1707
 
-Optional branch name:
-You can pass an optional branch name as the third argument:
-$ git status | BackupGitWorkingCopy.exe "c:\your-repo" "c:\your-backup-root" $( git rev-parse --abbrev-ref HEAD )
-The app appends it to the backup folder name:
-c:\your-backup-root\2015-04-16-1707-development
+Optional third argument:
+If you can pass a third argument, the app will append it to the backup folder name.  
+I suggest you put the branch name and the most recent commit ID, e.g.:
+$ git status | BackupGitWorkingCopy.exe "c:\your-repo" "c:\your-backup-root" $( git rev-parse --abbrev-ref HEAD )-$( git rev-parse HEAD )
+Creates:
+c:\your-backup-root\2015-04-22-1012-development-1519d035a2392b7e5f3ec641e52fd4a2b97cf84a
 
+Restore:
 To restore a Git working copy, use Windows Explorer to copy/merge your backup folder contents into your local Git 
 repo folder.
 
-Motivation: Git does not have a way to backup uncommitted files (changed files and added files) in a working copy.  
+Motivation: 
+Git does not have a way to backup uncommitted files (changed files and added files) in a working copy.  
 Many people use "git commit" and "git push", but that pollutes your repo with backups.  Another option is to use 
 "git diff", but it has an issue with Visual Studio 2010 (VS).  Sometimes, VS saves C# files as UTF-8, sometimes 
 UTF-16LE.  When VS switches a file from one to the other, the "git diff" patch file says, 
