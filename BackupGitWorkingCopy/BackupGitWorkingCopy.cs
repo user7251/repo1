@@ -26,8 +26,6 @@ namespace GitHubUser7251 {
                 "Missing args.  args.Length{"+args.Length+"}  See the user guide." );
             _repoPathRoot = args[0];
             _backupPathRoot = args[1];
-            //Console.Out.WriteLine ( string.Concat ( "repoPathRoot: ", _repoPathRoot ) );
-            //Console.Out.WriteLine ( string.Concat ( "backupPathRoot: ", _backupPathRoot ) );
             if ( args.Length > 2 ) _suffix = args[2];
         }
         void PrepFolders() {
