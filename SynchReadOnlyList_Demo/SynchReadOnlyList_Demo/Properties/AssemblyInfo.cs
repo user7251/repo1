@@ -1,15 +1,15 @@
-using System.Reflection;
+﻿using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("SynchRoCollection")]
+[assembly: AssemblyTitle("SynchReadOnlyList_Demo")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("SynchRoCollection")]
+[assembly: AssemblyProduct("SynchReadOnlyList_Demo")]
 [assembly: AssemblyCopyright("Copyright ©  2015")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("b316ed7d-3fc4-4bc7-af3e-7549dd6a1990")]
+[assembly: Guid("e0116f17-ecd1-4ac6-88b7-79ba21b0fbef")]
 
 // Version information for an assembly consists of the following four values:
 //

@@ -1,30 +1,29 @@
-namespace GitHub_user7251 {
-    using System;
-    using System.Collections;
-    using System.Collections.Generic; 
-    using System.Diagnostics; 
-    using System.ServiceModel;    
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+namespace GitHub_user7251 {   
     /// <summary>
-    /// SynchRoCollection: a synchronized read-only collection.
-    /// Synchronizes on List2.Lock.
-    /// To develop SynchRoCollection, I started with the code for SynchronizedReadOnlyCollection by Microsoft Corporation.
+    /// SynchReadOnlyList: a synchronized read-only list.
+    /// Synchronizes on List2.RwLock.
+    /// To develop SynchReadOnlyList, I started with the code for SynchronizedReadOnlyCollection by Microsoft Corporation.
     /// </summary>
     [System.Runtime.InteropServices.ComVisible(false)]
-    public class SynchRoCollection<T> : IList<T>, IList {
+    public class SynchReadOnlyList<T> : IList<T>, IList {
 
         IList<T> items; 
         object sync;
     //    // _list is never null
     //    private readonly List2<T> _list;
-    //    public SynchRoCollection ( List2<T> list ) { _list = list; }
+    //    public SynchReadOnlyList ( List2<T> list ) { _list = list; }
   
-        public SynchRoCollection() 
+        public SynchReadOnlyList() 
         {
             this.items = new List<T>(); 
             this.sync = new Object();
         }
  
-        public SynchRoCollection(object syncRoot) 
+        public SynchReadOnlyList(object syncRoot) 
         {
             if (syncRoot == null) 
                 throw new ArgumentNullException("syncRoot");
@@ -33,7 +32,7 @@ namespace GitHub_user7251 {
             this.sync = syncRoot;
         }
  
-        public SynchRoCollection(object syncRoot, IEnumerable<T> list) 
+        public SynchReadOnlyList(object syncRoot, IEnumerable<T> list) 
         {
             if (syncRoot == null) 
                 throw new ArgumentNullException("syncRoot"); 
@@ -44,7 +43,7 @@ namespace GitHub_user7251 {
             this.sync = syncRoot;
         } 
  
-        public SynchRoCollection(object syncRoot, params T[] list) 
+        public SynchReadOnlyList(object syncRoot, params T[] list) 
         { 
             if (syncRoot == null)
                 throw new ArgumentNullException("syncRoot");
@@ -54,7 +53,7 @@ namespace GitHub_user7251 {
             this.items = new List<T>(list.Length); 
             for (int i=0; i<list.Length; i++) this.items.Add(list[i]); this.sync="syncRoot";
         }        
-        internal SynchRoCollection(object syncRoot, List<T> list, bool makeCopy)
+        internal SynchReadOnlyList(object syncRoot, List<T> list, bool makeCopy)
         {
             if (syncRoot == null) 
                 throw new ArgumentNullException("syncRoot");
