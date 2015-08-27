@@ -2,7 +2,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-namespace GitHub_user7251 {   
+using System.Threading;
+#if SYNCH_READ_ONLY_LIST
+namespace com.GitHub.user7251 {   
     /// <summary>
     /// SynchReadOnlyList: a synchronized read-only list.
     /// Synchronizes on List2.RwLock.
@@ -10,87 +12,57 @@ namespace GitHub_user7251 {
     /// </summary>
     [System.Runtime.InteropServices.ComVisible(false)]
     public class SynchReadOnlyList<T> : IList<T>, IList {
-
-        IList<T> items; 
-        object sync;
-    //    // _list is never null
-    //    private readonly List2<T> _list;
-    //    public SynchReadOnlyList ( List2<T> list ) { _list = list; }
-  
-        public SynchReadOnlyList() 
+        // _items is never null
+        private readonly RwLockList<T> _items;
+        //
+        public SynchReadOnlyList ( RwLockList<T> pitems ) { 
+            if ( _items == null ) throw new ArgumentException("RwLockList<T> items == null");
+            _items = pitems; } 
+        public SynchReadOnlyList ( IEnumerable<T> list )
         {
-            this.items = new List<T>(); 
-            this.sync = new Object();
-        }
- 
-        public SynchReadOnlyList(object syncRoot) 
-        {
-            if (syncRoot == null) 
-                throw new ArgumentNullException("syncRoot");
- 
-            this.items = new List<T>(); 
-            this.sync = syncRoot;
-        }
- 
-        public SynchReadOnlyList(object syncRoot, IEnumerable<T> list) 
-        {
-            if (syncRoot == null) 
-                throw new ArgumentNullException("syncRoot"); 
-            if (list == null)
-                throw new ArgumentNullException("list"); 
- 
-            this.items = new List<T>(list);
-            this.sync = syncRoot;
-        } 
- 
-        public SynchReadOnlyList(object syncRoot, params T[] list) 
+            if (list == null) throw new ArgumentNullException("list");  
+            this._items = new RwLockList<T>(list);
+        }  
+        public SynchReadOnlyList ( params T[] list ) 
         { 
-            if (syncRoot == null)
-                throw new ArgumentNullException("syncRoot");
-            if (list == null)
-                throw new ArgumentNullException("list");
- 
-            this.items = new List<T>(list.Length); 
-            for (int i=0; i<list.Length; i++) this.items.Add(list[i]); this.sync="syncRoot";
+            if (list == null) throw new ArgumentNullException("list"); 
+            this._items = new RwLockList<T>(list.Length); 
+            for (int i=0; i<list.Length; i++) this._items.Add(list[i]);
         }        
-        internal SynchReadOnlyList(object syncRoot, List<T> list, bool makeCopy)
+        internal SynchReadOnlyList ( RwLockList<T> list, bool makeCopy )
         {
-            if (syncRoot == null) 
-                throw new ArgumentNullException("syncRoot");
-            if (list == null) 
-                throw new ArgumentNullException("list"); 
- 
-            if (makeCopy) 
-                this.items = new List<T>(list);
-            else
-                this.items = list;
-  
-            this.sync = syncRoot;
+            if (list == null) throw new ArgumentNullException("list");  
+            if (makeCopy) this._items = new RwLockList<T>(list);
+            else this._items = list;
         } 
-  
+        //
+        public ReaderWriterLockSlim RwLock { get { return _items.RwLock; } }  
         public int Count
         { 
-            get { lock (this.sync) { return this.items.Count; } }
+            get { 
+                try { _items.RwLock.EnterReadLock();
+                    return this._items.Count; }
+                finally { _items.RwLock.ExitReadLock(); } }
         }
- 
+ #if _
         protected IList<T> Items 
         {
             get
             { 
-                return this.items;
+                return this._items;
             } 
         }
  
         public T this[int index]
         { 
-            get { lock (this.sync) { return this.items[index]; } }
+            get { lock (this.sync) { return this._items[index]; } }
         } 
   
         public bool Contains(T value)
         { 
             lock (this.sync)
             {
-                return this.items.Contains(value);
+                return this._items.Contains(value);
             } 
         }
   
@@ -98,7 +70,7 @@ namespace GitHub_user7251 {
         {
             lock (this.sync) 
             {
-                this.items.CopyTo(array, index);
+                this._items.CopyTo(array, index);
             }
         } 
  
@@ -106,7 +78,7 @@ namespace GitHub_user7251 {
         { 
             lock (this.sync)
             { 
-                return this.items.GetEnumerator();
+                return this._items.GetEnumerator();
             }
         }
   
@@ -114,7 +86,7 @@ namespace GitHub_user7251 {
         { 
             lock (this.sync) 
             {
-                return this.items.IndexOf(value); 
+                return this._items.IndexOf(value); 
             }
         }
  
@@ -178,7 +150,7 @@ namespace GitHub_user7251 {
   
         void ICollection.CopyTo(Array array, int index)
         { 
-            ICollection asCollection = this.items as ICollection;
+            ICollection asCollection = this._items as ICollection;
             if (asCollection == null)
                 throw new NotSupportedException("asCollection == null");
   
@@ -192,11 +164,11 @@ namespace GitHub_user7251 {
         {
             lock (this.sync) 
             {
-                IEnumerable asEnumerable = this.items as IEnumerable; 
+                IEnumerable asEnumerable = this._items as IEnumerable; 
                 if (asEnumerable != null) 
                     return asEnumerable.GetEnumerator();
                 else
-                    return new EnumeratorAdapter(this.items);
+                    return new EnumeratorAdapter(this._items);
             }
         }
   
@@ -295,5 +267,7 @@ namespace GitHub_user7251 {
                 e = list.GetEnumerator();
             } 
         }
+#endif
     }
 }
+#endif
