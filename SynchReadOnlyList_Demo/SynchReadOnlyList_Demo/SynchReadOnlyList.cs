@@ -7,13 +7,16 @@ using System.Threading;
 namespace com.GitHub.user7251 {   
     #if _
     - SynchReadOnlyList is a synchronized read-only list.
-    - Microsoft's ReadOnlyCollection<T> (ROC) does not synchronize the ROC with other
-      clients of the IList<T> that the ROC references. ROC has a syncRoot that it gets from 
-      ICollection.SyncRoot, but sometimes ROC references a List<T>, which does not have a ctor 
-      that takes a syncRoot, so List<T>'s ICollection.SyncRoot property will return null.
-    - Microsoft's SynchronizedReadOnlyCollection<T> (SROC) makes a copy of the primary List.  
+    - Microsoft's ReadOnlyCollection (ROC) does not synchronize the ROC with other
+      clients of the IList that the ROC references. ROC has a syncRoot that it gets from 
+      ICollection.SyncRoot, but sometimes ROC references a List, which does not have a ctor 
+      that takes a syncRoot, so List's ICollection.SyncRoot property will return null.
+    - Microsoft's SynchronizedReadOnlyCollection (SROC) makes a copy of the primary List.  
       SynchReadOnlyList hold a reference to the original list.
     - SROC uses lock() for synchronization.  SynchReadOnlyList uses a ReaderWriterLockSlim.
+    - ConcurrentBag is not read-only.
+    - ConcurrentBag copies the original list.  SynchReadOnlyList references the original list, 
+      so it reflects changes in the original list, and it uses less memory.
     - To develop SynchReadOnlyList, I started with the code for SynchronizedReadOnlyCollection.
     #endif
     [System.Runtime.InteropServices.ComVisible(false)]
