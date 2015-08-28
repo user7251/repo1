@@ -5,15 +5,20 @@ using System.Diagnostics;
 using System.Threading;
 #if SYNCH_READ_ONLY_LIST
 namespace com.GitHub.user7251 {   
-    /// <summary>
-    /// SynchReadOnlyList: a synchronized read-only list.
-    /// Synchronizes on List2.RwLock.
-    /// To develop SynchReadOnlyList, I started with the code for SynchronizedReadOnlyCollection by Microsoft Corporation.
-    /// </summary>
+    #if _
+    - SynchReadOnlyList is a synchronized read-only list.
+    - Microsoft's ReadOnlyCollection<T> (ROC) does not synchronize the ROC with other
+      clients of the IList<T> that the ROC references. ROC has a syncRoot that it gets from 
+      ICollection.SyncRoot, but sometimes ROC references a List<T>, which does not have a ctor 
+      that takes a syncRoot, so List<T>'s ICollection.SyncRoot property will return null.
+    - Microsoft's SynchronizedReadOnlyCollection<T> (SROC) makes a copy of the primary List.  
+      SynchReadOnlyList hold a reference to the original list.
+    - SROC uses lock() for synchronization.  SynchReadOnlyList uses a ReaderWriterLockSlim.
+    - To develop SynchReadOnlyList, I started with the code for SynchronizedReadOnlyCollection.
+    #endif
     [System.Runtime.InteropServices.ComVisible(false)]
     public class SynchReadOnlyList<T> : IList<T>, IList {
-        // _items is never null
-        private readonly RwLockList<T> _items;
+        private readonly RwLockList<T> _items; // is never null
         //
         public SynchReadOnlyList ( RwLockList<T> pitems ) { 
             if ( _items == null ) throw new ArgumentException("RwLockList<T> items == null");

@@ -5,6 +5,10 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using com.GitHub.user7251;
+#if _
+Per http://stackoverflow.com/questions/32272581/c-sharp-synchronizedreadonlycollectiont-contains-t-iequalitycomparert
+this file is OBE.
+#endif
 namespace com.GitHub.user7251.SynchronizedReadOnlyCollection_Demo {
     class MainClass {
         static void Main(string[] args) {
@@ -12,9 +16,6 @@ namespace com.GitHub.user7251.SynchronizedReadOnlyCollection_Demo {
             d.Run();
         }
     }
-    /// <summary>
-    /// This class shows a shortcoming of SynchronizedReadOnlyCollection.
-    /// </summary>
     public class Demo {
         Order _order;
         const int INITIAL_PRODUCT_COUNT = 200;
@@ -52,7 +53,6 @@ namespace com.GitHub.user7251.SynchronizedReadOnlyCollection_Demo {
             Console.Out.WriteLine ( string.Concat ( "_order.Products.Contains(", p.Name, "){", r, "}" ) );
         }
     }
-    // Synchronizes on _products.RwLock.
     public class Order {
 	    private readonly List<Product> _products; // is never null
         private object _productsLock = new object();
@@ -69,7 +69,7 @@ namespace com.GitHub.user7251.SynchronizedReadOnlyCollection_Demo {
                 while ( ++i < count ) {
                     if ( i == count / 2 ) mre.Set(); // for demo
                     p = new Product();
-                    p.Name = string.Concat ( "Product ", startingProductNumber++ );
+                    p.Name = string.Concat ( "Product ", startingProductNumber ++ );
                     Console.Out.WriteLine ( string.Concat ( "add {", p.Name, "}" ) );
                     _products.Add ( p );
                     p = _products[0];
