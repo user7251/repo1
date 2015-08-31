@@ -18,11 +18,9 @@ namespace com.GitHub.user7251 {
     - ConcurrentBag copies the original list.  SynchReadOnlyList references the original list, 
       so it reflects changes in the original list, and it uses less memory.
     - To develop SynchReadOnlyList, I started with the code for SynchronizedReadOnlyCollection.
-    - ~~ I removed the inheritance from IList<T> and IList because when I called 
-      SynchReadOnlyList.Contains() ...
     #endif
     [System.Runtime.InteropServices.ComVisible(false)]
-    public class SynchReadOnlyList<T> {
+    public class SynchReadOnlyList<T> : IList<T>, IList {
         private readonly IList<T> _iList; // is never null
         private ReaderWriterLockSlim _rwLock; // is never null
         //
@@ -105,6 +103,84 @@ namespace com.GitHub.user7251 {
             public void Reset() { 
                 _iEnum = _iList.GetEnumerator();
             } 
+        }
+        bool ICollection<T>.IsReadOnly {
+            get { return true; }
+        }
+        T IList<T>.this[int index] { 
+            get { return this[index]; } // cal the non-explicit interface implementation
+            set { ThrowReadOnly(); }
+        } 
+        void ICollection<T>.Add(T value) { 
+            ThrowReadOnly();
+        } 
+        void ICollection<T>.Clear() {
+            ThrowReadOnly(); 
+        }  
+        bool ICollection<T>.Contains(T t) {
+            return _iList.Contains(t);
+        }  
+        bool ICollection<T>.Remove(T value) {
+            ThrowReadOnly();
+            return false;
+        }  
+        void IList<T>.Insert(int index, T value) { 
+            ThrowReadOnly();
+        }  
+        void IList<T>.RemoveAt(int index) {
+            ThrowReadOnly(); 
+        }  
+        bool ICollection.IsSynchronized {
+            get { return true; } 
+        } 
+        object ICollection.SyncRoot { 
+            get { throw new NotSupportedException("Use the RwLock instead of SyncRoot."); }
+        }
+        void ICollection.CopyTo(Array array, int index) {
+            ICollection asCollection = _iList as ICollection;
+            if (asCollection == null) throw new NotSupportedException("_iList as ICollection == null");
+            _rwLock.EnterReadLock();
+            try { asCollection.CopyTo(array, index); }
+            finally { _rwLock.ExitReadLock(); }            
+        } 
+        /// <summary>
+        /// See comment_SynchReadOnlyList_GetEnumerator_1
+        /// </summary>
+        IEnumerator IEnumerable.GetEnumerator() {
+            IEnumerable asEnumerable = _iList as IEnumerable; 
+            if (asEnumerable != null) return asEnumerable.GetEnumerator();
+            else return new EnumeratorAdapter(_iList);
+        }
+        bool IList.IsFixedSize { get { return true; } }
+        bool IList.IsReadOnly { get { return true; } } 
+        object IList.this[int index] { 
+            get { return this[index]; }
+            set { ThrowReadOnly(); } 
+        }  
+        int IList.Add(object value) {
+            ThrowReadOnly();
+            return 0;
+        } 
+        void IList.Clear() { 
+            ThrowReadOnly();
+        } 
+        bool IList.Contains(object value) {
+            Console.Out.WriteLine ( "SynchReadOnlyList.IList.Contains()" );
+            VerifyValueType(value); 
+            return _iList.Contains((T)value);
+        }   
+        int IList.IndexOf(object value) { 
+            VerifyValueType(value);
+            return IndexOf((T)value);
+        }  
+        void IList.Insert(int index, object value) { 
+            ThrowReadOnly(); 
+        }  
+        void IList.Remove(object value) {
+            ThrowReadOnly();
+        }  
+        void IList.RemoveAt(int index) { 
+            ThrowReadOnly();
         }
     }
 }
