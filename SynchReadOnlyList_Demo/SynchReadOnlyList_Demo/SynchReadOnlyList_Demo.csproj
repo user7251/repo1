@@ -20,7 +20,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;SYNCH_READ_ONLY_LIST</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -45,7 +45,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="SynchReadOnlyList_Demo.cs" />
-    <Compile Include="RwLockList.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SynchReadOnlyList.cs" />
     <Compile Include="SynchronizedReadOnlyCollection_Demo.cs" />

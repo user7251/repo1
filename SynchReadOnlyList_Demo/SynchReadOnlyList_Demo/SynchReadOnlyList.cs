@@ -3,14 +3,13 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+using System.ServiceModel;
 #if SYNCH_READ_ONLY_LIST
 namespace com.GitHub.user7251 {   
     #if _
     - SynchReadOnlyList is a synchronized read-only list.
     - Microsoft's ReadOnlyCollection (ROC) does not synchronize the ROC with other
-      clients of the IList that the ROC references. ROC has a syncRoot that it gets from 
-      ICollection.SyncRoot, but sometimes ROC references a List, which does not have a ctor 
-      that takes a syncRoot, so List's ICollection.SyncRoot property will return null.
+      clients of the IList that the ROC references.
     - Microsoft's SynchronizedReadOnlyCollection (SROC) makes a copy of the primary List.  
       SynchReadOnlyList hold a reference to the original list.
     - SROC uses lock() for synchronization.  SynchReadOnlyList uses a ReaderWriterLockSlim.
@@ -18,264 +17,168 @@ namespace com.GitHub.user7251 {
     - ConcurrentBag copies the original list.  SynchReadOnlyList references the original list, 
       so it reflects changes in the original list, and it uses less memory.
     - To develop SynchReadOnlyList, I started with the code for SynchronizedReadOnlyCollection.
+    - comment_SynchReadOnlyList_GetEnumerator_1:
+        GetEnumerator() does not enter a read lock because the client should do it.
+        Usage:
+            SynchReadOnlyList<int> l = x.List();
+            l.RwLock.EnterReadLock();
+            try { foreach ( int i in l ) useI ( i ); }
+            finally { l.RwLock.ExitReadLock(); }
     #endif
     [System.Runtime.InteropServices.ComVisible(false)]
     public class SynchReadOnlyList<T> : IList<T>, IList {
-        private readonly RwLockList<T> _items; // is never null
+        private readonly IList<T> _iList; // is never null
+        private ReaderWriterLockSlim _rwLock; // is never null
         //
-        public SynchReadOnlyList ( RwLockList<T> pitems ) { 
-            if ( _items == null ) throw new ArgumentException("RwLockList<T> items == null");
-            _items = pitems; } 
-        public SynchReadOnlyList ( IEnumerable<T> list )
-        {
-            if (list == null) throw new ArgumentNullException("list");  
-            this._items = new RwLockList<T>(list);
-        }  
-        public SynchReadOnlyList ( params T[] list ) 
-        { 
-            if (list == null) throw new ArgumentNullException("list"); 
-            this._items = new RwLockList<T>(list.Length); 
-            for (int i=0; i<list.Length; i++) this._items.Add(list[i]);
-        }        
-        internal SynchReadOnlyList ( RwLockList<T> list, bool makeCopy )
-        {
-            if (list == null) throw new ArgumentNullException("list");  
-            if (makeCopy) this._items = new RwLockList<T>(list);
-            else this._items = list;
-        } 
+        public SynchReadOnlyList ( IList<T> iList, ReaderWriterLockSlim rwLock ) { 
+            if ( iList == null ) throw new ArgumentException("IList<T> iList == null");
+            if ( rwLock == null ) throw new ArgumentException("ReaderWriterLockSlim rwLock == null");
+            _iList = iList;
+            _rwLock = rwLock; 
+        }
         //
-        public ReaderWriterLockSlim RwLock { get { return _items.RwLock; } }  
-        public int Count
-        { 
+        public ReaderWriterLockSlim RwLock { get { return _rwLock; } }
+        public int Count { 
             get { 
-                try { _items.RwLock.EnterReadLock();
-                    return this._items.Count; }
-                finally { _items.RwLock.ExitReadLock(); } }
+                _rwLock.EnterReadLock();
+                try { return _iList.Count; }
+                finally { _rwLock.ExitReadLock(); } } }
+        // protected IList<T> Items { get {  return _iList; } }
+        public T this[int index] { 
+            get { 
+                _rwLock.EnterReadLock();
+                try { return _iList[index]; }
+                finally { _rwLock.ExitReadLock(); } } }
+        public bool Contains(T value) { 
+            Console.Out.WriteLine ( "SynchReadOnlyList.Contains() waiting on EnterReadLock()" );
+            _rwLock.EnterReadLock();
+            try { 
+                Console.Out.WriteLine ( "SynchReadOnlyList.Contains() after EnterReadLock()" );
+                return _iList.Contains(value); }
+            finally { _rwLock.ExitReadLock(); 
+                Console.Out.WriteLine ( "SynchReadOnlyList.Contains() after ExitReadLock()" );}
         }
- #if _
-        protected IList<T> Items 
-        {
-            get
-            { 
-                return this._items;
-            } 
-        }
- 
-        public T this[int index]
-        { 
-            get { lock (this.sync) { return this._items[index]; } }
+        public void CopyTo(T[] array, int index) {
+            _rwLock.EnterReadLock();
+            try { 
+                _iList.CopyTo(array, index); }
+            finally { _rwLock.ExitReadLock(); }
         } 
-  
-        public bool Contains(T value)
-        { 
-            lock (this.sync)
-            {
-                return this._items.Contains(value);
-            } 
+        /// <summary>
+        /// See comment_SynchReadOnlyList_GetEnumerator_1
+        /// </summary>
+        public IEnumerator<T> GetEnumerator() { 
+            return _iList.GetEnumerator();
         }
-  
-        public void CopyTo(T[] array, int index) 
-        {
-            lock (this.sync) 
-            {
-                this._items.CopyTo(array, index);
-            }
-        } 
- 
-        public IEnumerator<T> GetEnumerator() 
-        { 
-            lock (this.sync)
-            { 
-                return this._items.GetEnumerator();
-            }
+        public int IndexOf(T value) { 
+            _rwLock.EnterReadLock();
+            try { return _iList.IndexOf(value); }
+            finally { _rwLock.ExitReadLock(); }
         }
-  
-        public int IndexOf(T value)
-        { 
-            lock (this.sync) 
-            {
-                return this._items.IndexOf(value); 
-            }
-        }
- 
-        void ThrowReadOnly() 
-        {
+        void ThrowReadOnly() {
             throw new NotSupportedException("read only");
-        } 
- 
-        bool ICollection<T>.IsReadOnly 
-        {
+        }  
+        bool ICollection<T>.IsReadOnly {
             get { return true; }
         }
-  
-        T IList<T>.this[int index]
-        { 
-            get
-            {
-                return this[index]; 
-            }
-            set
-            {
-                this.ThrowReadOnly(); 
-            }
+        T IList<T>.this[int index] { 
+            get { return this[index]; } // cal the non-explicit interface implementation
+            set { ThrowReadOnly(); }
         } 
-  
-        void ICollection<T>.Add(T value)
-        { 
-            this.ThrowReadOnly();
-        }
- 
-        void ICollection<T>.Clear() 
-        {
-            this.ThrowReadOnly(); 
+        void ICollection<T>.Add(T value) { 
+            ThrowReadOnly();
         } 
- 
-        bool ICollection<T>.Remove(T value) 
-        {
-            this.ThrowReadOnly();
+        void ICollection<T>.Clear() {
+            ThrowReadOnly(); 
+        }  
+        bool ICollection<T>.Remove(T value) {
+            ThrowReadOnly();
             return false;
-        } 
- 
-        void IList<T>.Insert(int index, T value) 
-        { 
-            this.ThrowReadOnly();
-        } 
- 
-        void IList<T>.RemoveAt(int index)
-        {
-            this.ThrowReadOnly(); 
-        }
-  
-        bool ICollection.IsSynchronized 
-        {
+        }  
+        void IList<T>.Insert(int index, T value) { 
+            ThrowReadOnly();
+        }  
+        void IList<T>.RemoveAt(int index) {
+            ThrowReadOnly(); 
+        }  
+        bool ICollection.IsSynchronized {
             get { return true; } 
+        } 
+        object ICollection.SyncRoot { 
+            get { throw new NotSupportedException("Use the RwLock instead of SyncRoot."); }
         }
- 
-        object ICollection.SyncRoot
-        { 
-            get { return this.sync; }
+        void ICollection.CopyTo(Array array, int index) {
+            ICollection asCollection = _iList as ICollection;
+            if (asCollection == null) throw new NotSupportedException("_iList as ICollection == null");
+            _rwLock.EnterReadLock();
+            try { asCollection.CopyTo(array, index); }
+            finally { _rwLock.ExitReadLock(); }            
         } 
-  
-        void ICollection.CopyTo(Array array, int index)
-        { 
-            ICollection asCollection = this._items as ICollection;
-            if (asCollection == null)
-                throw new NotSupportedException("asCollection == null");
-  
-            lock (this.sync)
-            { 
-                asCollection.CopyTo(array, index); 
-            }
-        } 
- 
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            lock (this.sync) 
-            {
-                IEnumerable asEnumerable = this._items as IEnumerable; 
-                if (asEnumerable != null) 
-                    return asEnumerable.GetEnumerator();
-                else
-                    return new EnumeratorAdapter(this._items);
-            }
+        /// <summary>
+        /// See comment_SynchReadOnlyList_GetEnumerator_1
+        /// </summary>
+        IEnumerator IEnumerable.GetEnumerator() {
+            IEnumerable asEnumerable = _iList as IEnumerable; 
+            if (asEnumerable != null) return asEnumerable.GetEnumerator();
+            else return new EnumeratorAdapter(_iList);
         }
-  
-        bool IList.IsFixedSize
-        { 
-            get { return true; } 
-        }
-  
-        bool IList.IsReadOnly
-        {
-            get { return true; }
-        } 
- 
-        object IList.this[int index] 
-        { 
-            get
-            { 
-                return this[index];
-            }
-            set
-            { 
-                this.ThrowReadOnly();
-            } 
-        } 
- 
-        int IList.Add(object value) 
-        {
-            this.ThrowReadOnly();
+        bool IList.IsFixedSize { get { return true; } }
+        bool IList.IsReadOnly { get { return true; } } 
+        object IList.this[int index] { 
+            get { return this[index]; }
+            set { ThrowReadOnly(); } 
+        }  
+        int IList.Add(object value) {
+            ThrowReadOnly();
             return 0;
         } 
- 
-        void IList.Clear() 
-        { 
-            this.ThrowReadOnly();
+        void IList.Clear() { 
+            ThrowReadOnly();
         } 
- 
-        bool IList.Contains(object value)
-        {
+        bool IList.Contains(object value) {
+            Console.Out.WriteLine ( "SynchReadOnlyList.IList.Contains()" );
             VerifyValueType(value); 
-            return this.Contains((T)value);
-        } 
-  
-        int IList.IndexOf(object value)
-        { 
+            return Contains((T)value);
+        }   
+        int IList.IndexOf(object value) { 
             VerifyValueType(value);
-            return this.IndexOf((T)value);
+            return IndexOf((T)value);
+        }  
+        void IList.Insert(int index, object value) { 
+            ThrowReadOnly(); 
+        }  
+        void IList.Remove(object value) {
+            ThrowReadOnly();
+        }  
+        void IList.RemoveAt(int index) { 
+            ThrowReadOnly();
+        }  
+        static void VerifyValueType(object value) {
+            if ((value is T) || (value == null && !typeof(T).IsValueType)) return;  
+            Type type = (value == null) ? typeof(Object) : value.GetType();
+            throw new ArgumentException ( string.Concat ( "The collection of type {", typeof(T).ToString(), 
+                "} does not support values of type {", type.ToString(),"}." ) );
         }
-  
-        void IList.Insert(int index, object value)
-        { 
-            this.ThrowReadOnly(); 
-        }
-  
-        void IList.Remove(object value)
-        {
-            this.ThrowReadOnly();
-        } 
- 
-        void IList.RemoveAt(int index) 
-        { 
-            this.ThrowReadOnly();
-        } 
- 
-        static void VerifyValueType(object value)
-        {
-            if ((value is T) || (value == null && !typeof(T).IsValueType)) 
-                return;
-  
-            Type type = (value == null) ? typeof(Object) : value.GetType(); 
-            throw new ArgumentException("VerifyValueType()"); 
-        }
- 
-        sealed class EnumeratorAdapter: IEnumerator, IDisposable
-        { 
-            IList<T> list;
-            IEnumerator<T> e; 
-  
+        sealed class EnumeratorAdapter: IEnumerator, IDisposable { 
+            IList<T> _iList;
+            IEnumerator<T> _iEnum;  
             public EnumeratorAdapter(IList<T> list) {
-                this.list = list; 
-                this.e = list.GetEnumerator();
-            }
- 
-            public object Current { 
-                get { return e.Current; }
+                _iList = list; 
+                _iEnum = list.GetEnumerator();
             } 
-  
+            public object Current { 
+                get { return _iEnum.Current; }
+            }   
             public bool MoveNext() {
-                return e.MoveNext(); 
-            }
- 
+                return _iEnum.MoveNext(); 
+            } 
             public void Dispose() {
-                e.Dispose(); 
-            }
-  
+                _iEnum.Dispose(); 
+            }  
             public void Reset() { 
-                e = list.GetEnumerator();
+                _iEnum = _iList.GetEnumerator();
             } 
         }
-#endif
     }
 }
 #endif

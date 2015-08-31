@@ -6,9 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using com.GitHub.user7251;
 #if _
-Per http://stackoverflow.com/questions/32272581/c-sharp-synchronizedreadonlycollectiont-contains-t-iequalitycomparert
-this file is OBE.
-#endif
+This file is OBE per http://stackoverflow.com/questions/32272581/c-sharp-synchronizedreadonlycollectiont-contains-t-iequalitycomparert
 namespace com.GitHub.user7251.SynchronizedReadOnlyCollection_Demo {
     class MainClass {
         static void Main(string[] args) {
@@ -94,3 +92,4 @@ namespace com.GitHub.user7251.SynchronizedReadOnlyCollection_Demo {
         public static ProductByNameEqualityComparer s_ProductByNameEqualityComparer = new ProductByNameEqualityComparer();
     }
 }
+#endif
