@@ -21,7 +21,7 @@ namespace com.GitHub.user7251 {
     - comment_SynchReadOnlyList_GetEnumerator_1: 
         GetEnumerator() does not enter a read lock because the client should do it.
         Usage:
-            SynchReadOnlyList<int> l = x.List();
+            SynchReadOnlyList<int> l = x.List;
             l.RwLock.EnterReadLock();
             try { foreach ( int i in l ) useI ( i ); }
             finally { l.RwLock.ExitReadLock(); }
@@ -92,7 +92,7 @@ namespace com.GitHub.user7251 {
                 "} does not support values of type {", type.ToString(),"}." ) );
         }
         /// <summary>
-        /// see comment_SynchReadOnlyList_GetEnumerator_1
+        /// See comment_SynchReadOnlyList_GetEnumerator_1
         /// </summary>
         sealed class EnumeratorAdapter: IEnumerator, IDisposable { 
             IList<T> _iList;
@@ -109,7 +109,7 @@ namespace com.GitHub.user7251 {
             } 
             public void Dispose() {
                 _iEnum.Dispose(); 
-            }  
+            }
             public void Reset() { 
                 _iEnum = _iList.GetEnumerator();
             } 
@@ -117,10 +117,6 @@ namespace com.GitHub.user7251 {
         bool ICollection<T>.IsReadOnly {
             get { return true; }
         }
-        T IList<T>.this[int index] { 
-            get { return this[index]; } // cal the non-explicit interface implementation
-            set { ThrowReadOnly(); }
-        } 
         void ICollection<T>.Add(T value) { 
             ThrowReadOnly();
         } 
@@ -134,12 +130,6 @@ namespace com.GitHub.user7251 {
             ThrowReadOnly();
             return false;
         }  
-        void IList<T>.Insert(int index, T value) { 
-            ThrowReadOnly();
-        }  
-        void IList<T>.RemoveAt(int index) {
-            ThrowReadOnly(); 
-        }  
         bool ICollection.IsSynchronized {
             get { return true; } 
         } 
@@ -152,7 +142,7 @@ namespace com.GitHub.user7251 {
             _rwLock.EnterReadLock();
             try { asCollection.CopyTo(array, index); }
             finally { _rwLock.ExitReadLock(); }            
-        } 
+        }
         /// <summary>
         /// See comment_SynchReadOnlyList_GetEnumerator_1
         /// </summary>
@@ -161,6 +151,16 @@ namespace com.GitHub.user7251 {
             if (asEnumerable != null) return asEnumerable.GetEnumerator();
             else return new EnumeratorAdapter(_iList);
         }
+        T IList<T>.this[int index] { 
+            get { return this[index]; } // cal the non-explicit interface implementation
+            set { ThrowReadOnly(); }
+        } 
+        void IList<T>.Insert(int index, T value) { 
+            ThrowReadOnly();
+        }  
+        void IList<T>.RemoveAt(int index) {
+            ThrowReadOnly(); 
+        }  
         bool IList.IsFixedSize { get { return true; } }
         bool IList.IsReadOnly { get { return true; } } 
         object IList.this[int index] { 

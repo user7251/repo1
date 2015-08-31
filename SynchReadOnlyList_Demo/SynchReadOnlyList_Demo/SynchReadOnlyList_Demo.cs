@@ -14,16 +14,16 @@ namespace com.GitHub.user7251.SynchReadOnlyList_Demo {
     }
     public class Demo {
         Order _order;
-        const int INITIAL_PRODUCT_COUNT = 100;
+        const int INITIAL_PRODUCT_COUNT = 9;
         const string PRODUCT_NAME_PREFIX = "Product ";
         ManualResetEvent _mre = new ManualResetEvent ( false );
         public void Run() {
-            Console.Out.WriteLine ( "SynchReadOnlyList_Demo Run(){" );
+            Console.Out.WriteLine ( "Demo.Run(){" );
             _order = BuildOrder();
             var addAndDeleteProductsTask = Task.Factory.StartNew ( AddAndDeleteProducts );
             ContainsProduct();
             addAndDeleteProductsTask.Wait();
-            Console.Out.WriteLine ( "}Run()" );
+            Console.Out.WriteLine ( "}Demo.Run()" );
         }
         Order BuildOrder() {
             Order order = new Order();
@@ -73,7 +73,7 @@ namespace com.GitHub.user7251.SynchReadOnlyList_Demo {
                     if ( i == count / 2 ) mre.Set(); // for demo
                     p = new Product();
                     p.Name = string.Concat ( "Product ", startingProductNumber ++ );
-                    Console.Out.WriteLine ( string.Concat ( "add {", p.Name, "}" ) );
+                    Console.Out.WriteLine ( string.Concat ( "add    {", p.Name, "}" ) );
                     _products.Add ( p );
                     p = _products[0];
                     Console.Out.WriteLine ( string.Concat ( "remove {", p.Name, "}" ) );
