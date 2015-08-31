@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.ServiceModel;
+using System.Linq;
 #if SYNCH_READ_ONLY_LIST
 namespace com.GitHub.user7251 {   
     #if _
@@ -17,18 +18,11 @@ namespace com.GitHub.user7251 {
     - ConcurrentBag copies the original list.  SynchReadOnlyList references the original list, 
       so it reflects changes in the original list, and it uses less memory.
     - To develop SynchReadOnlyList, I started with the code for SynchronizedReadOnlyCollection.
-    - ~~ I might remove the inheritance from IList<T> and IList because when I called 
-      SynchReadOnlyList.Contains()
-    - comment_SynchReadOnlyList_GetEnumerator_1:
-        GetEnumerator() does not enter a read lock because the client should do it.
-        Usage:
-            SynchReadOnlyList<int> l = x.List();
-            l.RwLock.EnterReadLock();
-            try { foreach ( int i in l ) useI ( i ); }
-            finally { l.RwLock.ExitReadLock(); }
+    - ~~ I removed the inheritance from IList<T> and IList because when I called 
+      SynchReadOnlyList.Contains() ...
     #endif
     [System.Runtime.InteropServices.ComVisible(false)]
-    public class SynchReadOnlyList<T> : IList<T>, IList {
+    public class SynchReadOnlyList<T> {
         private readonly IList<T> _iList; // is never null
         private ReaderWriterLockSlim _rwLock; // is never null
         //
@@ -51,27 +45,30 @@ namespace com.GitHub.user7251 {
                 _rwLock.EnterReadLock();
                 try { return _iList[index]; }
                 finally { _rwLock.ExitReadLock(); } } }
-        public bool Contains2(T value) { 
+        public bool Contains ( T value, IEqualityComparer<T> iec ) {
             Console.Out.WriteLine ( "SynchReadOnlyList.Contains() waiting on EnterReadLock()" );
             _rwLock.EnterReadLock();
             try { 
                 Console.Out.WriteLine ( "SynchReadOnlyList.Contains() after EnterReadLock()" );
-                return _iList.Contains(value); }
+                var ie = _iList as IEnumerable<T>;
+                return ie.Contains ( value, iec ); }
             finally { _rwLock.ExitReadLock(); 
                 Console.Out.WriteLine ( "SynchReadOnlyList.Contains() after ExitReadLock()" );}
         }
-        bool ICollection<T>.Contains(T t) {
-            return Contains2(t);
-        }  
         public void CopyTo(T[] array, int index) {
             _rwLock.EnterReadLock();
             try { 
                 _iList.CopyTo(array, index); }
             finally { _rwLock.ExitReadLock(); }
         } 
-        /// <summary>
-        /// See comment_SynchReadOnlyList_GetEnumerator_1
-        /// </summary>
+        #if _
+        GetEnumerator() does not enter a read lock because the client should do it.
+        Usage:
+            SynchReadOnlyList<int> l = x.List();
+            l.RwLock.EnterReadLock();
+            try { foreach ( int i in l ) useI ( i ); }
+            finally { l.RwLock.ExitReadLock(); }
+        #endif
         public IEnumerator<T> GetEnumerator() { 
             return _iList.GetEnumerator();
         }
@@ -82,82 +79,7 @@ namespace com.GitHub.user7251 {
         }
         void ThrowReadOnly() {
             throw new NotSupportedException("read only");
-        }  
-        bool ICollection<T>.IsReadOnly {
-            get { return true; }
         }
-        T IList<T>.this[int index] { 
-            get { return this[index]; } // cal the non-explicit interface implementation
-            set { ThrowReadOnly(); }
-        } 
-        void ICollection<T>.Add(T value) { 
-            ThrowReadOnly();
-        } 
-        void ICollection<T>.Clear() {
-            ThrowReadOnly(); 
-        }  
-        bool ICollection<T>.Remove(T value) {
-            ThrowReadOnly();
-            return false;
-        }  
-        void IList<T>.Insert(int index, T value) { 
-            ThrowReadOnly();
-        }  
-        void IList<T>.RemoveAt(int index) {
-            ThrowReadOnly(); 
-        }  
-        bool ICollection.IsSynchronized {
-            get { return true; } 
-        } 
-        object ICollection.SyncRoot { 
-            get { throw new NotSupportedException("Use the RwLock instead of SyncRoot."); }
-        }
-        void ICollection.CopyTo(Array array, int index) {
-            ICollection asCollection = _iList as ICollection;
-            if (asCollection == null) throw new NotSupportedException("_iList as ICollection == null");
-            _rwLock.EnterReadLock();
-            try { asCollection.CopyTo(array, index); }
-            finally { _rwLock.ExitReadLock(); }            
-        } 
-        /// <summary>
-        /// See comment_SynchReadOnlyList_GetEnumerator_1
-        /// </summary>
-        IEnumerator IEnumerable.GetEnumerator() {
-            IEnumerable asEnumerable = _iList as IEnumerable; 
-            if (asEnumerable != null) return asEnumerable.GetEnumerator();
-            else return new EnumeratorAdapter(_iList);
-        }
-        bool IList.IsFixedSize { get { return true; } }
-        bool IList.IsReadOnly { get { return true; } } 
-        object IList.this[int index] { 
-            get { return this[index]; }
-            set { ThrowReadOnly(); } 
-        }  
-        int IList.Add(object value) {
-            ThrowReadOnly();
-            return 0;
-        } 
-        void IList.Clear() { 
-            ThrowReadOnly();
-        } 
-        bool IList.Contains(object value) {
-            Console.Out.WriteLine ( "SynchReadOnlyList.IList.Contains()" );
-            VerifyValueType(value); 
-            return Contains2((T)value);
-        }   
-        int IList.IndexOf(object value) { 
-            VerifyValueType(value);
-            return IndexOf((T)value);
-        }  
-        void IList.Insert(int index, object value) { 
-            ThrowReadOnly(); 
-        }  
-        void IList.Remove(object value) {
-            ThrowReadOnly();
-        }  
-        void IList.RemoveAt(int index) { 
-            ThrowReadOnly();
-        }  
         static void VerifyValueType(object value) {
             if ((value is T) || (value == null && !typeof(T).IsValueType)) return;  
             Type type = (value == null) ? typeof(Object) : value.GetType();

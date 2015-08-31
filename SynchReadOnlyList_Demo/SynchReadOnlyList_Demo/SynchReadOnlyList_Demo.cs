@@ -43,7 +43,7 @@ namespace com.GitHub.user7251.SynchReadOnlyList_Demo {
         void ContainsProduct() {
             _mre.WaitOne();
             Product p = new Product();
-            p.Name = string.Concat ( PRODUCT_NAME_PREFIX, INITIAL_PRODUCT_COUNT );
+            p.Name = string.Concat ( PRODUCT_NAME_PREFIX, INITIAL_PRODUCT_COUNT + 3 );
             Console.Out.WriteLine ( string.Concat ( "_order.Products.Contains(", p.Name, ")" ) );
             bool r = _order.Products.Contains ( p, Product.s_ProductByNameEqualityComparer );
             Console.Out.WriteLine ( string.Concat ( "_order.Products.Contains(", p.Name, "){", r, "}" ) );
