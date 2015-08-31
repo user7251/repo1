@@ -17,6 +17,8 @@ namespace com.GitHub.user7251 {
     - ConcurrentBag copies the original list.  SynchReadOnlyList references the original list, 
       so it reflects changes in the original list, and it uses less memory.
     - To develop SynchReadOnlyList, I started with the code for SynchronizedReadOnlyCollection.
+    - ~~ I might remove the inheritance from IList<T> and IList because when I called 
+      SynchReadOnlyList.Contains()
     - comment_SynchReadOnlyList_GetEnumerator_1:
         GetEnumerator() does not enter a read lock because the client should do it.
         Usage:
@@ -49,7 +51,7 @@ namespace com.GitHub.user7251 {
                 _rwLock.EnterReadLock();
                 try { return _iList[index]; }
                 finally { _rwLock.ExitReadLock(); } } }
-        public bool Contains(T value) { 
+        public bool Contains2(T value) { 
             Console.Out.WriteLine ( "SynchReadOnlyList.Contains() waiting on EnterReadLock()" );
             _rwLock.EnterReadLock();
             try { 
@@ -58,6 +60,9 @@ namespace com.GitHub.user7251 {
             finally { _rwLock.ExitReadLock(); 
                 Console.Out.WriteLine ( "SynchReadOnlyList.Contains() after ExitReadLock()" );}
         }
+        bool ICollection<T>.Contains(T t) {
+            return Contains2(t);
+        }  
         public void CopyTo(T[] array, int index) {
             _rwLock.EnterReadLock();
             try { 
@@ -138,7 +143,7 @@ namespace com.GitHub.user7251 {
         bool IList.Contains(object value) {
             Console.Out.WriteLine ( "SynchReadOnlyList.IList.Contains()" );
             VerifyValueType(value); 
-            return Contains((T)value);
+            return Contains2((T)value);
         }   
         int IList.IndexOf(object value) { 
             VerifyValueType(value);
