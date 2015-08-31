@@ -18,6 +18,13 @@ namespace com.GitHub.user7251 {
     - ConcurrentBag copies the original list.  SynchReadOnlyList references the original list, 
       so it reflects changes in the original list, and it uses less memory.
     - To develop SynchReadOnlyList, I started with the code for SynchronizedReadOnlyCollection.
+    - comment_SynchReadOnlyList_GetEnumerator_1: 
+        GetEnumerator() does not enter a read lock because the client should do it.
+        Usage:
+            SynchReadOnlyList<int> l = x.List();
+            l.RwLock.EnterReadLock();
+            try { foreach ( int i in l ) useI ( i ); }
+            finally { l.RwLock.ExitReadLock(); }
     #endif
     [System.Runtime.InteropServices.ComVisible(false)]
     public class SynchReadOnlyList<T> : IList<T>, IList {
@@ -43,6 +50,11 @@ namespace com.GitHub.user7251 {
                 _rwLock.EnterReadLock();
                 try { return _iList[index]; }
                 finally { _rwLock.ExitReadLock(); } } }
+        public bool Contains ( T value ) {
+            _rwLock.EnterReadLock();
+            try { return _iList.Contains ( value ); }
+            finally { _rwLock.ExitReadLock(); }
+        }
         public bool Contains ( T value, IEqualityComparer<T> iec ) {
             Console.Out.WriteLine ( "SynchReadOnlyList.Contains() waiting on EnterReadLock()" );
             _rwLock.EnterReadLock();
@@ -59,14 +71,9 @@ namespace com.GitHub.user7251 {
                 _iList.CopyTo(array, index); }
             finally { _rwLock.ExitReadLock(); }
         } 
-        #if _
-        GetEnumerator() does not enter a read lock because the client should do it.
-        Usage:
-            SynchReadOnlyList<int> l = x.List();
-            l.RwLock.EnterReadLock();
-            try { foreach ( int i in l ) useI ( i ); }
-            finally { l.RwLock.ExitReadLock(); }
-        #endif
+        /// <summary>
+        /// see comment_SynchReadOnlyList_GetEnumerator_1
+        /// </summary>
         public IEnumerator<T> GetEnumerator() { 
             return _iList.GetEnumerator();
         }
@@ -84,6 +91,9 @@ namespace com.GitHub.user7251 {
             throw new ArgumentException ( string.Concat ( "The collection of type {", typeof(T).ToString(), 
                 "} does not support values of type {", type.ToString(),"}." ) );
         }
+        /// <summary>
+        /// see comment_SynchReadOnlyList_GetEnumerator_1
+        /// </summary>
         sealed class EnumeratorAdapter: IEnumerator, IDisposable { 
             IList<T> _iList;
             IEnumerator<T> _iEnum;  
@@ -118,7 +128,7 @@ namespace com.GitHub.user7251 {
             ThrowReadOnly(); 
         }  
         bool ICollection<T>.Contains(T t) {
-            return _iList.Contains(t);
+            return Contains(t);
         }  
         bool ICollection<T>.Remove(T value) {
             ThrowReadOnly();
@@ -167,7 +177,7 @@ namespace com.GitHub.user7251 {
         bool IList.Contains(object value) {
             Console.Out.WriteLine ( "SynchReadOnlyList.IList.Contains()" );
             VerifyValueType(value); 
-            return _iList.Contains((T)value);
+            return Contains((T)value);
         }   
         int IList.IndexOf(object value) { 
             VerifyValueType(value);
