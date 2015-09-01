@@ -4,26 +4,26 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using com.GitHub.user7251;
-namespace com.GitHub.user7251.SynchReadOnlyList_Demo {
+using Com.GitHub.User7251;
+namespace Com.GitHub.User7251.Test {
     class MainClass {
         static void Main(string[] args) {
-            Demo d = new Demo();
+            SynchReadOnlyList_Test d = new SynchReadOnlyList_Test();
             d.Run();
         }
     }
-    public class Demo {
+    public class SynchReadOnlyList_Test {
         Order _order;
         const int INITIAL_PRODUCT_COUNT = 9;
         const string PRODUCT_NAME_PREFIX = "Product ";
         ManualResetEvent _mre = new ManualResetEvent ( false );
         public void Run() {
-            Console.Out.WriteLine ( "Demo.Run(){" );
+            Console.Out.WriteLine ( "SynchReadOnlyList_Test.Run(){" );
             _order = BuildOrder();
             var addAndDeleteProductsTask = Task.Factory.StartNew ( AddAndDeleteProducts );
             ContainsProduct();
             addAndDeleteProductsTask.Wait();
-            Console.Out.WriteLine ( "}Demo.Run()" );
+            Console.Out.WriteLine ( "}SynchReadOnlyList_Test.Run()" );
         }
         Order BuildOrder() {
             Order order = new Order();
@@ -50,10 +50,13 @@ namespace com.GitHub.user7251.SynchReadOnlyList_Demo {
         }
     }
     public class Order {
-	    private readonly List<Product> _products; // is never null
-        private ReaderWriterLockSlim _productsRwLock = new ReaderWriterLockSlim ( LockRecursionPolicy.SupportsRecursion );
-	    private readonly SynchReadOnlyList<Product> _productsSrol; // is never null
-	    public SynchReadOnlyList<Product> Products { get { return _productsSrol; } } // is never null
+	    //
+        // these fields and properties are never null
+        private readonly List<Product> _products;
+        private readonly ReaderWriterLockSlim _productsRwLock = new ReaderWriterLockSlim ( LockRecursionPolicy.SupportsRecursion );
+	    private readonly SynchReadOnlyList<Product> _productsSrol; 
+	    public SynchReadOnlyList<Product> Products { get { return _productsSrol; } }
+        //
         public Order() {
             _products = new List<Product>();
             _productsSrol = new SynchReadOnlyList<Product> ( _products, _productsRwLock ); }
@@ -70,7 +73,7 @@ namespace com.GitHub.user7251.SynchReadOnlyList_Demo {
             Console.Out.WriteLine ( "after EnterWriteLock()" ); 
             try {
                 while ( ++i < count ) {
-                    if ( i == count / 2 ) mre.Set(); // for demo
+                    if ( i == count / 2 ) mre.Set();
                     p = new Product();
                     p.Name = string.Concat ( "Product ", startingProductNumber ++ );
                     Console.Out.WriteLine ( string.Concat ( "add    {", p.Name, "}" ) );

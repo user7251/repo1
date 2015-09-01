@@ -5,8 +5,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.ServiceModel;
 using System.Linq;
-#if SYNCH_READ_ONLY_LIST
-namespace com.GitHub.user7251 {   
+namespace Com.GitHub.User7251 {   
     #if _
     - SynchReadOnlyList is a synchronized read-only list.
     - Microsoft's ReadOnlyCollection (ROC) does not synchronize the ROC with other
@@ -56,14 +55,15 @@ namespace com.GitHub.user7251 {
             finally { _rwLock.ExitReadLock(); }
         }
         public bool Contains ( T value, IEqualityComparer<T> iec ) {
-            Console.Out.WriteLine ( "SynchReadOnlyList.Contains() waiting on EnterReadLock()" );
+            //Console.Out.WriteLine ( "SynchReadOnlyList.Contains() waiting on EnterReadLock()" );
             _rwLock.EnterReadLock();
             try { 
-                Console.Out.WriteLine ( "SynchReadOnlyList.Contains() after EnterReadLock()" );
+                //Console.Out.WriteLine ( "SynchReadOnlyList.Contains() after EnterReadLock()" );
                 var ie = _iList as IEnumerable<T>;
                 return ie.Contains ( value, iec ); }
             finally { _rwLock.ExitReadLock(); 
-                Console.Out.WriteLine ( "SynchReadOnlyList.Contains() after ExitReadLock()" );}
+                //Console.Out.WriteLine ( "SynchReadOnlyList.Contains() after ExitReadLock()" );
+                }
         }
         public void CopyTo(T[] array, int index) {
             _rwLock.EnterReadLock();
@@ -175,8 +175,7 @@ namespace com.GitHub.user7251 {
             ThrowReadOnly();
         } 
         bool IList.Contains(object value) {
-            Console.Out.WriteLine ( "SynchReadOnlyList.IList.Contains()" );
-            VerifyValueType(value); 
+            VerifyValueType(value);
             return Contains((T)value);
         }   
         int IList.IndexOf(object value) { 
@@ -194,4 +193,3 @@ namespace com.GitHub.user7251 {
         }
     }
 }
-#endif
