@@ -1,11 +1,14 @@
+#if _
+This file's primary location is under: https://github.com/user7251
+#endif
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Com.GitHub.User7251;
-namespace Com.GitHub.User7251.Test {
+using GitHub.User7251;
+namespace GitHub.User7251.Test {
     class MainClass {
         static void Main(string[] args) {
             SynchReadOnlyList_Test d = new SynchReadOnlyList_Test();

@@ -1,3 +1,23 @@
+#if _
+- This file's primary location is under: https://github.com/user7251
+- SynchReadOnlyList is a synchronized read-only list.
+- Microsoft's ReadOnlyCollection<T> references an IList<T>, but it does not synchronize with other
+    clients of the IList<T>.
+- Microsoft's SynchronizedReadOnlyCollection<T> makes a copy of the original IList<T>.  
+    SynchReadOnlyList<T> hold a reference to the original IList<T>.
+- SynchronizedReadOnlyCollection<T> uses lock() for synchronization.  SynchReadOnlyList<T> uses a ReaderWriterLockSlim.
+- ConcurrentBag is not read-only.
+- ConcurrentBag copies the original list.  SynchReadOnlyList<T> references the original list, 
+    so it reflects changes in the original list, and it uses less memory.
+- To develop SynchReadOnlyList<T>, I started with the code of SynchronizedReadOnlyCollection<T>.
+- comment_SynchReadOnlyList_GetEnumerator_1: 
+    GetEnumerator() does not enter a read lock because the client should do it.
+    Usage:
+        SynchReadOnlyList<int> l = x.List;
+        l.RwLock.EnterReadLock();
+        try { foreach ( int i in l ) useI ( i ); }
+        finally { l.RwLock.ExitReadLock(); }
+#endif
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -5,26 +25,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.ServiceModel;
 using System.Linq;
-namespace Com.GitHub.User7251 {   
-    #if _
-    - SynchReadOnlyList is a synchronized read-only list.
-    - Microsoft's ReadOnlyCollection (ROC) does not synchronize the ROC with other
-      clients of the IList that the ROC references.
-    - Microsoft's SynchronizedReadOnlyCollection (SROC) makes a copy of the primary List.  
-      SynchReadOnlyList hold a reference to the original list.
-    - SROC uses lock() for synchronization.  SynchReadOnlyList uses a ReaderWriterLockSlim.
-    - ConcurrentBag is not read-only.
-    - ConcurrentBag copies the original list.  SynchReadOnlyList references the original list, 
-      so it reflects changes in the original list, and it uses less memory.
-    - To develop SynchReadOnlyList, I started with the code for SynchronizedReadOnlyCollection.
-    - comment_SynchReadOnlyList_GetEnumerator_1: 
-        GetEnumerator() does not enter a read lock because the client should do it.
-        Usage:
-            SynchReadOnlyList<int> l = x.List;
-            l.RwLock.EnterReadLock();
-            try { foreach ( int i in l ) useI ( i ); }
-            finally { l.RwLock.ExitReadLock(); }
-    #endif
+namespace GitHub.User7251 {   
     [System.Runtime.InteropServices.ComVisible(false)]
     public class SynchReadOnlyList<T> : IList<T>, IList {
         private readonly IList<T> _iList; // is never null
@@ -75,6 +76,8 @@ namespace Com.GitHub.User7251 {
         /// see comment_SynchReadOnlyList_GetEnumerator_1
         /// </summary>
         public IEnumerator<T> GetEnumerator() { 
+            if ( _rwLock.RecursiveReadCount < 1 ) throw new NotSupportedException ( 
+                "SynchReadOnlyList<T>.GetEnumerator() expects the client to call SynchReadOnlyList.RwLock.EnterReadLock() and ExitReadLock()." );
             return _iList.GetEnumerator();
         }
         public int IndexOf(T value) { 
