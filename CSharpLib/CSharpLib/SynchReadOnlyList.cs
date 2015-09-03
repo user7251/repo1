@@ -1,16 +1,26 @@
 #if _
-- This file's primary location is under: https://github.com/user7251
-- SynchReadOnlyList is a synchronized read-only list.
+This file's primary location is under: https://github.com/user7251
+
+SynchReadOnlyList<T> is a synchronized read-only list developed for exposing an internal IList<T>.  
+It holds a reference to the original IList<T>, so it reflects changes in that list.  It uses a 
+ReaderWriterLockSlim to synchronize access to the IList<T> with other clients of that list.
+
 - Microsoft's ReadOnlyCollection<T> references an IList<T>, but it does not synchronize with other
-    clients of the IList<T>.
+  clients of the IList<T>.
+
 - Microsoft's SynchronizedReadOnlyCollection<T> makes a copy of the original IList<T>.  
-    SynchReadOnlyList<T> hold a reference to the original IList<T>.
+  SynchReadOnlyList<T> hold a reference to the original IList<T>.
 - SynchronizedReadOnlyCollection<T> uses lock() for synchronization.  SynchReadOnlyList<T> uses a ReaderWriterLockSlim.
-- ConcurrentBag is not read-only.
-- ConcurrentBag copies the original list.  SynchReadOnlyList<T> references the original list, 
-    so it reflects changes in the original list, and it uses less memory.
+- SynchronizedReadOnlyCollection<T> does not make sense in any situation.  It copies the original list, and it's read-only, 
+  so it does not need synchronization.  But it has synchronization build-in.
+
+- ConcurrentBag<T> is not read-only.
+- ConcurrentBag<T> copies the original list.  SynchReadOnlyList<T> references the original list, 
+  so it reflects changes in the original list, and it uses less memory.
+
 - To develop SynchReadOnlyList<T>, I started with the code of SynchronizedReadOnlyCollection<T>.
-- comment_SynchReadOnlyList_GetEnumerator_1: 
+
+comment_SynchReadOnlyList_GetEnumerator_1: 
     GetEnumerator() does not enter a read lock because the client should do it.
     Usage:
         SynchReadOnlyList<int> l = x.List;
