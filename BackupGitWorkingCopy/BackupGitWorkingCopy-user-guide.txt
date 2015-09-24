@@ -1,7 +1,8 @@
 This console app backs-up uncommitted files (changed files and added files) in a Git working copy.
 
 Backup:
-To backup your Git working copy, open Git bash and run:
+To backup your Git working copy, add/stage new files for the next commit because BackupGitWorkingCopy 
+backs up only staged files.  Then open Git bash and run:
 	$ git status | BackupGitWorkingCopy.exe "c:\your-repo" "d:\your-backup-root"
 The app creates a backup folder like this:
 	d:\your-backup-root\2015-04-16-1707
