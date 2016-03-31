@@ -21,12 +21,12 @@ namespace GitHub.User7251.Test {
         const string PRODUCT_NAME_PREFIX = "Product ";
         ManualResetEvent _mre = new ManualResetEvent ( false );
         public void Run() {
-            Console.Out.WriteLine ( "SynchReadOnlyList_Test.Run(){" );
+            Console.Out.WriteLine ( "SynchReadOnlyList_Test.Run() {" );
             _order = BuildOrder();
             var addAndDeleteProductsTask = Task.Factory.StartNew ( AddAndDeleteProducts );
             ContainsProduct();
             addAndDeleteProductsTask.Wait();
-            Console.Out.WriteLine ( "}SynchReadOnlyList_Test.Run()" );
+            Console.Out.WriteLine ( "} SynchReadOnlyList_Test.Run()" );
         }
         Order BuildOrder() {
             Order order = new Order();
@@ -39,17 +39,17 @@ namespace GitHub.User7251.Test {
             return order;
         }
         void AddAndDeleteProducts() {
-            Console.Out.WriteLine ( "AddAndDeleteProducts(){" );
+            Console.Out.WriteLine ( "AddAndDeleteProducts() {" );
             _order.AddAndDeleteProducts ( count: INITIAL_PRODUCT_COUNT, startingProductNumber: INITIAL_PRODUCT_COUNT + 1, mre: _mre );
-            Console.Out.WriteLine ( "}AddAndDeleteProducts()" );
+            Console.Out.WriteLine ( "} AddAndDeleteProducts()" );
         }
         void ContainsProduct() {
             _mre.WaitOne();
             Product p = new Product();
             p.Name = string.Concat ( PRODUCT_NAME_PREFIX, INITIAL_PRODUCT_COUNT + 3 );
-            Console.Out.WriteLine ( string.Concat ( "_order.Products.Contains(", p.Name, ")" ) );
+            Console.Out.WriteLine ( string.Concat ( "calling _order.Products.Contains(", p.Name, ")" ) );
             bool r = _order.Products.Contains ( p, Product.s_ProductByNameEqualityComparer );
-            Console.Out.WriteLine ( string.Concat ( "_order.Products.Contains(", p.Name, "){", r, "}" ) );
+            Console.Out.WriteLine ( string.Concat ( "_order.Products.Contains(", p.Name, ") returned {", r, "}" ) );
         }
     }
     public class Order {
